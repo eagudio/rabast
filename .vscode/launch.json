@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Tap Tests",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "test", "--", "--timeout=0", "${file}"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "internalConsoleOptions": "openOnSessionStart",
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**", // Ignora codice interno di Node.js
+        "**/node_modules/**"   // Ignora codice nelle dipendenze
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "rabast",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "tap test/tests --disable-coverage"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ciaplu": "^2.4.1"
+  },
+  "devDependencies": {
+    "tap": "^21.1.0",
+    "ts-node": "^10.9.2"
+  }
+}
