@@ -17,6 +17,7 @@ export class Rabast implements Resolver {
     const response: HttpResponse | null = await route.handle({
       url,
       method: request.method,
+      body: request.body,
     }, root);
 
     if (response instanceof NullResponse) {
@@ -28,6 +29,12 @@ export class Rabast implements Resolver {
 
   async inject(request: any, root: string = '') {
     return await this.handle(request, root);
+  }
+
+  routing(handler: () => Promise<any> | any) {
+    this._matcher.otherwise(handler);
+
+    return this;
   }
 
   with(value: any, handler: () => Promise<any> | any) {

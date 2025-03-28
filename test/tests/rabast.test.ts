@@ -3,15 +3,16 @@ import { rabast, Route } from '../../src/main';
 import { Get, Post } from '../../src/methods';
 import { Ok } from '../../src/responses/http/ok';
 import { NotFound } from '../../src/responses/http/notfound';
+import { Unauthorized } from '../../src/responses/http/unauthorized';
 
 t.test('should match the correct route', async t => {
   const app = rabast();
 
   app
-    .otherwise(() =>
+    .routing(() =>
       Route('/', 
         Post('/login')
-          .otherwise(() => 'hello world')
+          .reply(() => 'hello world')
       ),
     );
 
@@ -27,10 +28,10 @@ t.test('should match the correct route with root', async t => {
   const app = rabast();
 
   app
-    .otherwise(() =>
+    .routing(() =>
       Route('/auth', 
         Post('/login')
-          .otherwise(() => 'hello world')
+          .reply(() => 'hello world')
       ),
     );
 
@@ -53,12 +54,12 @@ t.test('should match the correct route and subroute with method', async t => {
   const app = rabast();
 
   app
-    .otherwise(() =>
+    .routing(() =>
       Route('/', 
         Get('/')
-          .otherwise(() => 'hi'),
+          .reply(() => 'hi'),
         Post('/login')
-          .otherwise(() => 'hello world')
+          .reply(() => 'hello world')
       ),
     );
 
@@ -81,15 +82,15 @@ t.test('should match the correct nested route', async t => {
   const app = rabast();
 
   app
-    .otherwise(() =>
+    .routing(() =>
       Route('/api', 
         Route('/auth',
           Get()
-            .otherwise(() => 'hi'),
+            .reply(() => 'hi'),
           Get('/')
-            .otherwise(() => 'cerea'),
+            .reply(() => 'cerea'),
           Post('/login')
-            .otherwise(() => 'hello world')
+            .reply(() => 'hello world')
         )
       ),
     );
@@ -120,13 +121,13 @@ t.test('should match route and subroutes', async t => {
   const app = rabast();
 
   app
-    .otherwise(() =>
+    .routing(() =>
       Route('/', 
         Route('/auth',
           Post('/login')
-            .otherwise(() => 'hello world'),
+            .reply(() => 'hello world'),
           Post('/logout')
-            .otherwise(() => 'bye')
+            .reply(() => 'bye')
         )
       ),
     );
@@ -150,10 +151,10 @@ t.test('should not match route and throw error', async t => {
   const app = rabast();
 
   app
-    .otherwise(() =>
+    .routing(() =>
       Route('/', 
         Post('/login')
-          .otherwise(() => 'hello world')
+          .reply(() => 'hello world')
       ),
     );
 
@@ -169,10 +170,10 @@ t.test('should not match method and throw error', async t => {
   const app = rabast();
 
   app
-    .otherwise(() =>
+    .routing(() =>
       Route('/', 
         Post('/login')
-          .otherwise(() => 'hello world')
+          .reply(() => 'hello world')
       ),
     );
 
@@ -186,21 +187,21 @@ t.test('should not match method and throw error', async t => {
 
 t.test('should match route and rabast subroutes', async t => {
   const user = rabast()
-    .otherwise(() => 
+    .routing(() => 
       Route('/',
         Get()
-          .otherwise(() => 'user')
+          .reply(() => 'user')
       ),
     );
 
   const app = rabast()
-    .otherwise(() =>
+    .routing(() =>
       Route('/', 
         Route('/auth',
           Post('/login')
-            .otherwise(() => 'hello world'),
+            .reply(() => 'hello world'),
           Post('/logout')
-            .otherwise(() => 'bye')
+            .reply(() => 'bye')
         ),
         Route('/user',
           user
@@ -214,6 +215,72 @@ t.test('should match route and rabast subroutes', async t => {
   });
 
   t.same(response, new Ok('hello world'));
+
+  response = await app.inject({
+    url: '/auth/logout',
+    method: 'POST',
+  });
+
+  t.same(response, new Ok('bye'));
+
+  response = await app.inject({
+    url: '/user',
+    method: 'GET',
+  });
+
+  t.same(response, new Ok('user'));
+});
+
+t.test('should match route and rabast subroutes with conditions', async t => {
+  const user = rabast()
+    .routing(() => 
+      Route('/',
+        Get()
+          .reply(() => 'user')
+      ),
+    );
+
+  const app = rabast()
+    .routing(() =>
+      Route('/', 
+        Route('/auth',
+          Post('/login')
+            .test((request, user) => request.body.username === user.username && request.body.password === user.password)
+            .with({ username: 'tom', password: 'tompassword' }, () => 'hello world'),
+          Post('/unauthorizedlogin')
+            .test((request, user) => request.body.username === user.username && request.body.password === user.password)
+            .with({ username: 'alice', password: 'alicepassword' }, () => 'hello world')
+            .otherwise(() => new Unauthorized('Unauthorized')),
+          Post('/logout')
+            .reply(() => 'bye')
+        ),
+        Route('/user',
+          user
+        )
+      ),
+    );
+
+  let response = await app.inject({
+    url: '/auth/login',
+    method: 'POST',
+    body: {
+      username: 'tom',
+      password: 'tompassword'
+    }
+  });
+
+  t.same(response, new Ok('hello world'));
+
+  response = await app.inject({
+    url: '/auth/unauthorizedlogin',
+    method: 'POST',
+    body: {
+      username: 'tom',
+      password: 'tompassword'
+    }
+  });
+
+  t.same(response, new Unauthorized('Unauthorized'));
 
   response = await app.inject({
     url: '/auth/logout',

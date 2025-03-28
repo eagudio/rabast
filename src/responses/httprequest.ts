@@ -1,4 +1,5 @@
-export interface HttpRequest {
-  url: string;
-  method: string;
+export abstract class HttpRequest {
+  abstract url: string;
+  abstract method: string;
+  abstract body: any;
 }

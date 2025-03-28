@@ -1,4 +1,4 @@
-export interface HttpResponse {
-  statusCode: number;
-  body?: any;
+export abstract class HttpResponse {
+  abstract statusCode: number;
+  abstract body?: any;
 }
