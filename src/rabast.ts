@@ -1,115 +1,112 @@
 import { Matcher } from "ciaplu";
 import path from 'path';
+import { Route } from "./route";
 
 export class Rabast {
-  private _url: string = '/';
   private _method: string = '';
   private _r: Rabast | null = null;
-  private _matcher: Matcher<any>;
+  private _matcher: Matcher<any> = new Matcher({});
 
-  constructor(url: string = '/') {
-    this._matcher = new Matcher({});
-    this._url = path.posix.normalize(url);
+  constructor() {
   }
 
   async inject(request: any) {
-    const urls = [
-      this._url,
-      ...path.posix.normalize(path.posix.join(this._url, request.url)).split('/').filter(Boolean)
-    ];
-    
-    const response = await this._resolveRoute(request, urls);
+    const route: Route = await this._matcher;
+
+    const url = path.posix.normalize(request.url);
+
+    const response = await route.resolve(url);
 
     return response;
   }
 
-  private async _resolveRoute(request: any, urls: string[], index: number = 0) {
-    const normalizedRoute = path.posix.normalize('/' + urls[index]);
+  // private async _resolveRoute(request: any, urls: string[], index: number = 0) {
+  //   const normalizedRoute = path.posix.normalize('/' + urls[index]);
 
-    if (this._url === normalizedRoute && this._method === request.method && index === urls.length - 1) {
-      return await this._matcher;
-    }
+  //   if (this._url === normalizedRoute && this._method === request.method && index === urls.length - 1) {
+  //     return await this._matcher;
+  //   }
 
-    if (index === urls.length || this._r === null) {
-      throw new Error('Route not found');
-    }
+  //   if (index === urls.length || this._r === null) {
+  //     throw new Error('Route not found');
+  //   }
 
-    const response = await this._r._resolveRoute(request, urls, index + 1);
+  //   const response = await this._r._resolveRoute(request, urls, index + 1);
 
-    return response;
-  }
+  //   return response;
+  // }
   
-  route (path: string) {
-    this._r = new Rabast(path);
+  // route (path: string) {
+  //   this._r = new Rabast(path);
 
-    return this._r;
-  }
+  //   return this._r;
+  // }
 
-  get() {
-    this._method = 'GET';
+  // get() {
+  //   this._method = 'GET';
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  post() {
-    this._method = 'POST';
+  // post() {
+  //   this._method = 'POST';
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  put() {
-    this._method = 'PUT';
+  // put() {
+  //   this._method = 'PUT';
 
-    return this;
-  }
+  //   return this;
+  // }
   
-  delete() {
-    this._method = 'DELETE';
+  // delete() {
+  //   this._method = 'DELETE';
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  first() {
-    this._matcher.first();
+  // first() {
+  //   this._matcher.first();
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  any() {
-    this._matcher.any();
+  // any() {
+  //   this._matcher.any();
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  head() {
-    this._method = 'HEAD';
+  // head() {
+  //   this._method = 'HEAD';
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  connect() {
-    this._method = 'CONNECT';
+  // connect() {
+  //   this._method = 'CONNECT';
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  options() {
-    this._method = 'OPTIONS';
+  // options() {
+  //   this._method = 'OPTIONS';
 
-    return this;
-  }
+  //   return this;
+  // }
   
-  trace() {
-    this._method = 'TRACE';
+  // trace() {
+  //   this._method = 'TRACE';
 
-    return this;
-  }
+  //   return this;
+  // }
 
-  patch() {
-    this._method = 'PATCH';
+  // patch() {
+  //   this._method = 'PATCH';
 
-    return this;
-  }
+  //   return this;
+  // }
 
   with(value: any, handler: () => Promise<any> | any) {
     this._matcher.with(value, handler);
