@@ -1,7 +1,7 @@
-import { HttpRequest } from "./httprequest";
-import { HttpResponse } from "./httpresponse";
+import { HttpRequest } from "./responses/httprequest";
+import { HttpResponse } from "./responses/httpresponse";
 
 export interface Resolver {
-  handle(request: HttpRequest, root: string): Promise<HttpResponse>;
+  handle(request: HttpRequest, root: string): Promise<HttpResponse | null>;
 }
 

@@ -1,9 +1,10 @@
-import { HttpRequest } from "./httprequest";
+import { HttpRequest } from "./responses/httprequest";
 import { Method } from "./methods/method";
 import path from 'path';
 import { Rabast } from "./rabast";
 import { Resolver } from "./resolver";
-import { HttpResponse } from "./httpresponse";
+import { HttpResponse } from "./responses/httpresponse";
+import { NullResponse } from "./responses/nullresponse";
 
 export class Route implements Resolver {
   private _route: string;
@@ -14,18 +15,20 @@ export class Route implements Resolver {
     this._methods = methods;
   }
 
-  async handle(request: HttpRequest, root: string = '') {
+  async handle(request: HttpRequest, root: string = ''): Promise<HttpResponse | null> {
     for (const method of this._methods) {
       const currentPath = path.posix.join(root, this._route);
 
       const response: HttpResponse | null = await method.handle(request, currentPath);
 
-      if (response) {
-        return response;
+      if (response instanceof NullResponse) {
+        continue;
       }
+
+      return response;
     }
 
-    return null;
+    return new NullResponse();
   }
 
   get route() {

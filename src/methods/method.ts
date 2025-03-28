@@ -1,8 +1,10 @@
 import { Matcher } from "ciaplu";
 import path from 'path';
 import { Resolver } from "../resolver";
-import { HttpRequest } from "../httprequest";
-import { HttpResponse } from "../httpresponse";
+import { HttpRequest } from "../responses/httprequest";
+import { HttpResponse } from "../responses/httpresponse";
+import { Ok } from "../responses/http/ok";
+import { NullResponse } from "../responses/nullresponse";
 
 export class Method extends Matcher<string> implements Resolver {
   private _name: string;
@@ -15,19 +17,16 @@ export class Method extends Matcher<string> implements Resolver {
     this._path = path.posix.normalize(_path);
   }
 
-  async handle(request: HttpRequest, root: string = ''): Promise<HttpResponse> {
+  async handle(request: HttpRequest, root: string = ''): Promise<HttpResponse | null> {
     const currentPath = path.posix.join(root, this.path);
 
     if (currentPath === request.url && this.name === request.method) {
       const response = await this;
 
-      return {
-        status: 200,
-        body: response,
-      };
+      return new Ok(response);
     }
 
-    return;
+    return new NullResponse();
   }
 
   get path() {

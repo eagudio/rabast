@@ -2,32 +2,32 @@ import { Matcher } from "ciaplu";
 import path from 'path';
 import { Route } from "./route";
 import { Resolver } from "./resolver";
-import { HttpResponse } from "./httpresponse";
+import { HttpResponse } from "./responses/httpresponse";
+import { NotFound } from "./responses/http/notfound";
+import { NullResponse } from "./responses/nullresponse";
 
 export class Rabast implements Resolver {
   private _matcher: Matcher<any> = new Matcher({});
 
-  async handle(request: any, root: string = '') {
+  async handle(request: any, root: string = ''): Promise<HttpResponse | null> {
     const route: Route = await this._matcher;
 
     const url = path.posix.normalize(request.url);
 
-    const response = await route.handle({
+    const response: HttpResponse | null = await route.handle({
       url,
       method: request.method,
     }, root);
+
+    if (response instanceof NullResponse) {
+      return new NotFound(`Route ${request.method}:${request.url} not found`);
+    }
 
     return response;
   }
 
   async inject(request: any, root: string = '') {
-    const response: HttpResponse | null = await this.handle(request, root);
-    
-    if (!response) {
-      throw new Error('Route not found');
-    }
-
-    return response.body;
+    return await this.handle(request, root);
   }
 
   with(value: any, handler: () => Promise<any> | any) {

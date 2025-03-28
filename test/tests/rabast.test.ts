@@ -1,6 +1,8 @@
 import t from 'tap';
 import { rabast, Route } from '../../src/main';
 import { Get, Post } from '../../src/methods';
+import { Ok } from '../../src/responses/http/ok';
+import { NotFound } from '../../src/responses/http/notfound';
 
 t.test('should match the correct route', async t => {
   const app = rabast();
@@ -18,7 +20,7 @@ t.test('should match the correct route', async t => {
     method: 'POST',
   });
 
-  t.equal(response, 'hello world');
+  t.same(response, new Ok('hello world'));
 });
 
 t.test('should match the correct route with root', async t => {
@@ -32,20 +34,19 @@ t.test('should match the correct route with root', async t => {
       ),
     );
 
-  const response = await app.inject({
+  let response = await app.inject({
     url: '/auth/login',
     method: 'POST',
   });
 
-  t.equal(response, 'hello world');
+  t.same(response, new Ok('hello world'));
 
-  await t.rejects(
-    app.inject({
-      url: '/login',
-      method: 'POST',
-    }),
-    { message: 'Route not found' }
-  );
+  response = await app.inject({
+    url: '/login',
+    method: 'POST',
+  });
+
+  t.same(response, new NotFound('Route POST:/login not found'));
 });
 
 t.test('should match the correct route and subroute with method', async t => {
@@ -66,14 +67,14 @@ t.test('should match the correct route and subroute with method', async t => {
     method: 'POST',
   });
 
-  t.equal(response, 'hello world');
+  t.same(response, new Ok('hello world'));
 
   response = await app.inject({
     url: '/',
     method: 'GET',
   });
 
-  t.equal(response, 'hi');
+  t.same(response, new Ok('hi'));
 });
 
 t.test('should match the correct nested route', async t => {
@@ -98,21 +99,21 @@ t.test('should match the correct nested route', async t => {
     method: 'POST',
   });
 
-  t.equal(response, 'hello world');
+  t.same(response, new Ok('hello world'));
 
   response = await app.inject({
     url: '/api/auth',
     method: 'GET',
   });
 
-  t.equal(response, 'hi');
+  t.same(response, new Ok('hi'));
 
   response = await app.inject({
     url: '/api/auth/',
     method: 'GET',
   });
 
-  t.equal(response, 'cerea');
+  t.same(response, new Ok('cerea'));
 });
 
 t.test('should match route and subroutes', async t => {
@@ -135,14 +136,14 @@ t.test('should match route and subroutes', async t => {
     method: 'POST',
   });
 
-  t.equal(response, 'hello world');
+  t.same(response, new Ok('hello world'));
 
   response = await app.inject({
     url: '/auth/logout',
     method: 'POST',
   });
 
-  t.equal(response, 'bye');
+  t.same(response, new Ok('bye'));
 });
 
 t.test('should not match route and throw error', async t => {
@@ -156,13 +157,12 @@ t.test('should not match route and throw error', async t => {
       ),
     );
 
-  await t.rejects(
-    app.inject({
-      url: '/logout',
-      method: 'POST',
-    }),
-    { message: 'Route not found' }
-  );
+  const response = await app.inject({
+    url: '/logout',
+    method: 'POST',
+  });
+
+  t.same(response, new NotFound('Route POST:/logout not found'));
 });
 
 t.test('should not match method and throw error', async t => {
@@ -176,13 +176,12 @@ t.test('should not match method and throw error', async t => {
       ),
     );
 
-  await t.rejects(
-    app.inject({
-      url: '/login',
-      method: 'GET',
-    }),
-    { message: 'Route not found' }
-  );
+  const response = await app.inject({
+    url: '/login',
+    method: 'GET',
+  });
+
+  t.same(response, new NotFound('Route GET:/login not found'));
 });
 
 t.test('should match route and rabast subroutes', async t => {
@@ -214,19 +213,19 @@ t.test('should match route and rabast subroutes', async t => {
     method: 'POST',
   });
 
-  t.equal(response, 'hello world');
+  t.same(response, new Ok('hello world'));
 
   response = await app.inject({
     url: '/auth/logout',
     method: 'POST',
   });
 
-  t.equal(response, 'bye');
+  t.same(response, new Ok('bye'));
 
   response = await app.inject({
     url: '/user',
     method: 'GET',
   });
 
-  t.equal(response, 'user');
+  t.same(response, new Ok('user'));
 });
