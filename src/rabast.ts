@@ -15,7 +15,10 @@ export class Rabast {
 
     const url = path.posix.normalize(request.url);
 
-    const response = await route.resolve(url);
+    const response = await route.resolve({
+      url,
+      method: request.method,
+    });
 
     return response;
   }

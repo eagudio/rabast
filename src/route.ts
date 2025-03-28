@@ -1,3 +1,4 @@
+import { HttpRequest } from "./httprequest";
 import { Method } from "./methods/method";
 import path from 'path';
 
@@ -10,12 +11,12 @@ export class Route {
     this._methods = methods;
   }
 
-  async resolve(url: string, root: string = '') {
+  async resolve(request: HttpRequest, root: string = '') {
     for (const method of this._methods) {
       if (method instanceof Method) {
         const currentPath = path.posix.join(root, this._route, method.path);
 
-        if (currentPath === url) {
+        if (currentPath === request.url && method.name === request.method) {
           const response = await method;
 
           return response;
@@ -23,7 +24,7 @@ export class Route {
       } else if (method instanceof Route) {
         const currentPath = path.posix.join(root, this._route);
 
-        const response = await method.resolve(url, currentPath);
+        const response = await method.resolve(request, currentPath);
 
         if (response) {
           return response;

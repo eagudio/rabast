@@ -115,6 +115,36 @@ t.test('should match the correct nested route', async t => {
   t.equal(response, 'cerea');
 });
 
+t.test('should match route and subroutes', async t => {
+  const app = rabast();
+
+  app
+    .otherwise(() =>
+      Route('/', 
+        Route('/auth',
+          Post('/login')
+            .otherwise(() => 'hello world'),
+          Post('/logout')
+            .otherwise(() => 'bye')
+        )
+      ),
+    );
+
+  let response = await app.inject({
+    url: '/auth/login',
+    method: 'POST',
+  });
+
+  t.equal(response, 'hello world');
+
+  response = await app.inject({
+    url: '/auth/logout',
+    method: 'POST',
+  });
+
+  t.equal(response, 'bye');
+});
+
 t.test('should not match route and throw error', async t => {
   const app = rabast();
 
@@ -154,24 +184,3 @@ t.test('should not match method and throw error', async t => {
     { message: 'Route not found' }
   );
 });
-
-// t.test('should match route and subroutes', async t => {
-//   const auth = rabast('/auth');
-
-//   auth
-//     .route('/login')
-//     .post()
-//     .otherwise(() => 'hello world');
-
-//   auth
-//     .route('/logout')
-//     .post()
-//     .otherwise(() => 'bye');
-
-//   const response = await auth.inject({
-//     url: '/auth/login',
-//     method: 'POST',
-//   });
-
-//   t.equal(response, 'hello world');
-// });
