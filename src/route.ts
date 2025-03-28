@@ -1,38 +1,31 @@
 import { HttpRequest } from "./httprequest";
 import { Method } from "./methods/method";
 import path from 'path';
+import { Rabast } from "./rabast";
+import { Resolver } from "./resolver";
+import { HttpResponse } from "./httpresponse";
 
-export class Route {
+export class Route implements Resolver {
   private _route: string;
-  private _methods: Method[] | Route[];
+  private _methods: Method[] | Route[] | Rabast[] = [];
 
   constructor(_route: string, ...methods: any[]) {
     this._route = _route;
     this._methods = methods;
   }
 
-  async resolve(request: HttpRequest, root: string = '') {
+  async handle(request: HttpRequest, root: string = '') {
     for (const method of this._methods) {
-      if (method instanceof Method) {
-        const currentPath = path.posix.join(root, this._route, method.path);
+      const currentPath = path.posix.join(root, this._route);
 
-        if (currentPath === request.url && method.name === request.method) {
-          const response = await method;
+      const response: HttpResponse | null = await method.handle(request, currentPath);
 
-          return response;
-        }
-      } else if (method instanceof Route) {
-        const currentPath = path.posix.join(root, this._route);
-
-        const response = await method.resolve(request, currentPath);
-
-        if (response) {
-          return response;
-        }
+      if (response) {
+        return response;
       }
     }
 
-    throw new Error('Route not found');
+    return null;
   }
 
   get route() {

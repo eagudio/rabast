@@ -1,115 +1,34 @@
 import { Matcher } from "ciaplu";
 import path from 'path';
 import { Route } from "./route";
+import { Resolver } from "./resolver";
+import { HttpResponse } from "./httpresponse";
 
-export class Rabast {
-  private _method: string = '';
-  private _r: Rabast | null = null;
+export class Rabast implements Resolver {
   private _matcher: Matcher<any> = new Matcher({});
 
-  constructor() {
-  }
-
-  async inject(request: any) {
+  async handle(request: any, root: string = '') {
     const route: Route = await this._matcher;
 
     const url = path.posix.normalize(request.url);
 
-    const response = await route.resolve({
+    const response = await route.handle({
       url,
       method: request.method,
-    });
+    }, root);
 
     return response;
   }
 
-  // private async _resolveRoute(request: any, urls: string[], index: number = 0) {
-  //   const normalizedRoute = path.posix.normalize('/' + urls[index]);
+  async inject(request: any, root: string = '') {
+    const response: HttpResponse | null = await this.handle(request, root);
+    
+    if (!response) {
+      throw new Error('Route not found');
+    }
 
-  //   if (this._url === normalizedRoute && this._method === request.method && index === urls.length - 1) {
-  //     return await this._matcher;
-  //   }
-
-  //   if (index === urls.length || this._r === null) {
-  //     throw new Error('Route not found');
-  //   }
-
-  //   const response = await this._r._resolveRoute(request, urls, index + 1);
-
-  //   return response;
-  // }
-  
-  // route (path: string) {
-  //   this._r = new Rabast(path);
-
-  //   return this._r;
-  // }
-
-  // get() {
-  //   this._method = 'GET';
-
-  //   return this;
-  // }
-
-  // post() {
-  //   this._method = 'POST';
-
-  //   return this;
-  // }
-
-  // put() {
-  //   this._method = 'PUT';
-
-  //   return this;
-  // }
-  
-  // delete() {
-  //   this._method = 'DELETE';
-
-  //   return this;
-  // }
-
-  // first() {
-  //   this._matcher.first();
-
-  //   return this;
-  // }
-
-  // any() {
-  //   this._matcher.any();
-
-  //   return this;
-  // }
-
-  // head() {
-  //   this._method = 'HEAD';
-
-  //   return this;
-  // }
-
-  // connect() {
-  //   this._method = 'CONNECT';
-
-  //   return this;
-  // }
-
-  // options() {
-  //   this._method = 'OPTIONS';
-
-  //   return this;
-  // }
-  
-  // trace() {
-  //   this._method = 'TRACE';
-
-  //   return this;
-  // }
-
-  // patch() {
-  //   this._method = 'PATCH';
-
-  //   return this;
-  // }
+    return response.body;
+  }
 
   with(value: any, handler: () => Promise<any> | any) {
     this._matcher.with(value, handler);

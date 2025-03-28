@@ -184,3 +184,49 @@ t.test('should not match method and throw error', async t => {
     { message: 'Route not found' }
   );
 });
+
+t.test('should match route and rabast subroutes', async t => {
+  const user = rabast()
+    .otherwise(() => 
+      Route('/',
+        Get()
+          .otherwise(() => 'user')
+      ),
+    );
+
+  const app = rabast()
+    .otherwise(() =>
+      Route('/', 
+        Route('/auth',
+          Post('/login')
+            .otherwise(() => 'hello world'),
+          Post('/logout')
+            .otherwise(() => 'bye')
+        ),
+        Route('/user',
+          user
+        )
+      ),
+    );
+
+  let response = await app.inject({
+    url: '/auth/login',
+    method: 'POST',
+  });
+
+  t.equal(response, 'hello world');
+
+  response = await app.inject({
+    url: '/auth/logout',
+    method: 'POST',
+  });
+
+  t.equal(response, 'bye');
+
+  response = await app.inject({
+    url: '/user',
+    method: 'GET',
+  });
+
+  t.equal(response, 'user');
+});
