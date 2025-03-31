@@ -10,8 +10,8 @@ t.test('should match the correct route', async t => {
 
   app
     .routing(() =>
-      Route('/', 
-        Post('/login')
+      Route('/login', 
+        Post()
           .reply(() => 'hello world')
       ),
     );
@@ -29,9 +29,11 @@ t.test('should match the correct route with root', async t => {
 
   app
     .routing(() =>
-      Route('/auth', 
-        Post('/login')
-          .reply(() => 'hello world')
+      Route('/auth',
+        Route('/login',
+          Post()
+            .reply(() => 'hello world')
+        )
       ),
     );
 
@@ -55,11 +57,13 @@ t.test('should match the correct route and subroute with method', async t => {
 
   app
     .routing(() =>
-      Route('/', 
-        Get('/')
+      Route('/',
+        Get()
           .reply(() => 'hi'),
-        Post('/login')
-          .reply(() => 'hello world')
+        Route('/login',
+          Post()
+            .reply(() => 'hello world')
+        )
       ),
     );
 
@@ -87,10 +91,14 @@ t.test('should match the correct nested route', async t => {
         Route('/auth',
           Get()
             .reply(() => 'hi'),
-          Get('/')
-            .reply(() => 'cerea'),
-          Post('/login')
-            .reply(() => 'hello world')
+          Route('/',
+            Get()
+              .reply(() => 'cerea'),
+          ),
+          Route('/login',
+            Post()
+              .reply(() => 'hello world')
+          )
         )
       ),
     );
@@ -124,10 +132,14 @@ t.test('should match route and subroutes', async t => {
     .routing(() =>
       Route('/', 
         Route('/auth',
-          Post('/login')
-            .reply(() => 'hello world'),
-          Post('/logout')
-            .reply(() => 'bye')
+          Route('/login',
+            Post()
+              .reply(() => 'hello world')
+          ),
+          Route('/logout',
+            Post()
+              .reply(() => 'bye')
+          )
         )
       ),
     );
@@ -153,8 +165,10 @@ t.test('should not match route and throw error', async t => {
   app
     .routing(() =>
       Route('/', 
-        Post('/login')
-          .reply(() => 'hello world')
+        Route('/login',
+          Post()
+            .reply(() => 'hello world')
+        )
       ),
     );
 
@@ -172,8 +186,10 @@ t.test('should not match method and throw error', async t => {
   app
     .routing(() =>
       Route('/', 
-        Post('/login')
-          .reply(() => 'hello world')
+        Route('/login',
+          Post()
+            .reply(() => 'hello world')
+        )
       ),
     );
 
@@ -188,7 +204,7 @@ t.test('should not match method and throw error', async t => {
 t.test('should match route and rabast subroutes', async t => {
   const user = rabast()
     .routing(() => 
-      Route('/',
+      Route('/user',
         Get()
           .reply(() => 'user')
       ),
@@ -198,12 +214,16 @@ t.test('should match route and rabast subroutes', async t => {
     .routing(() =>
       Route('/', 
         Route('/auth',
-          Post('/login')
-            .reply(() => 'hello world'),
-          Post('/logout')
-            .reply(() => 'bye')
+          Route('/login',
+            Post()
+              .reply(() => 'hello world')
+          ),
+          Route('/logout',
+            Post()
+              .reply(() => 'bye')
+          )
         ),
-        Route('/user',
+        Route('/users',
           user
         )
       ),
@@ -224,7 +244,7 @@ t.test('should match route and rabast subroutes', async t => {
   t.same(response, new Ok('bye'));
 
   response = await app.inject({
-    url: '/user',
+    url: '/users/user',
     method: 'GET',
   });
 
@@ -234,7 +254,7 @@ t.test('should match route and rabast subroutes', async t => {
 t.test('should match route and rabast subroutes with conditions', async t => {
   const user = rabast()
     .routing(() => 
-      Route('/',
+      Route('/user',
         Get()
           .reply(() => 'user')
       ),
@@ -244,17 +264,23 @@ t.test('should match route and rabast subroutes with conditions', async t => {
     .routing(() =>
       Route('/', 
         Route('/auth',
-          Post('/login')
-            .test((request, user) => request.body.username === user.username && request.body.password === user.password)
-            .with({ username: 'tom', password: 'tompassword' }, () => 'hello world'),
-          Post('/unauthorizedlogin')
-            .test((request, user) => request.body.username === user.username && request.body.password === user.password)
-            .with({ username: 'alice', password: 'alicepassword' }, () => 'hello world')
-            .otherwise(() => new Unauthorized('Unauthorized')),
-          Post('/logout')
-            .reply(() => 'bye')
+          Route('/login',
+            Post()
+              .test((request, user) => request.body.username === user.username && request.body.password === user.password)
+              .with({ username: 'tom', password: 'tompassword' }, () => 'hello world'),
+          ),
+          Route('/unauthorizedlogin',
+            Post()
+              .test((request, user) => request.body.username === user.username && request.body.password === user.password)
+              .with({ username: 'alice', password: 'alicepassword' }, () => 'hello world')
+              .otherwise(() => new Unauthorized('Unauthorized')),
+          ),
+          Route('/logout',
+            Post()
+              .reply(() => 'bye')
+          )
         ),
-        Route('/user',
+        Route('/users',
           user
         )
       ),
@@ -290,7 +316,7 @@ t.test('should match route and rabast subroutes with conditions', async t => {
   t.same(response, new Ok('bye'));
 
   response = await app.inject({
-    url: '/user',
+    url: '/users/user',
     method: 'GET',
   });
 

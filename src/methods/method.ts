@@ -1,5 +1,4 @@
 import { Matcher } from "ciaplu";
-import path from 'path';
 import { Resolver } from "../resolver";
 import { HttpRequest } from "../responses/httprequest";
 import { HttpResponse } from "../responses/httpresponse";
@@ -10,13 +9,11 @@ import { HttpError } from "../responses/http/httperror";
 
 export class Method implements Resolver {
   private _name: string;
-  private _path: string;
   private _matcher: Matcher<any>;
   private _requestExtractor: (request?: HttpRequest) => any;
 
-  constructor(_name: string = '', _path: string = '') {
+  constructor(_name: string = '') {
     this._name = _name;
-    this._path = path.posix.normalize(_path);
     this._matcher = new Matcher<any>({});
 
     this._requestExtractor = () => {};
@@ -24,11 +21,9 @@ export class Method implements Resolver {
   }
 
   async handle(request: HttpRequest, root: string = ''): Promise<HttpResponse | null> {
-    const currentPath = path.posix.join(root, this.path);
-
     this._requestExtractor = () => Promise.resolve(request);
 
-    if (currentPath === request.url && this.name === request.method) {
+    if (root === request.url && this.name === request.method) {
       const response = await this._matcher;
 
       if (response instanceof HttpError || response instanceof HttpSuccess || response instanceof NullResponse) {
@@ -45,10 +40,6 @@ export class Method implements Resolver {
     this._matcher.otherwise(handler);
 
     return this;
-  }
-
-  get path() {
-    return this._path;
   }
 
   get name() {
