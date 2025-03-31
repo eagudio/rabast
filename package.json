@@ -10,11 +10,11 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "ciaplu": "^2.4.1"
-  },
   "devDependencies": {
     "tap": "^21.1.0",
     "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "ciaplu": "^2.5.0"
   }
 }

@@ -9,11 +9,13 @@ import { HttpError } from "../responses/http/httperror";
 
 export class Method implements Resolver {
   private _name: string;
+  private _path: string;
   private _matcher: Matcher<any>;
   private _requestExtractor: (request?: HttpRequest) => any;
 
-  constructor(_name: string = '') {
+  constructor(_name: string = '', _path: string = '') {
     this._name = _name;
+    this._path = _path;
     this._matcher = new Matcher<any>({});
 
     this._requestExtractor = () => {};
@@ -21,9 +23,13 @@ export class Method implements Resolver {
   }
 
   async handle(request: HttpRequest, root: string = ''): Promise<HttpResponse | null> {
-    this._requestExtractor = () => Promise.resolve(request);
+    const fullPath = root + this._path;
 
-    if (root === request.url && this.name === request.method) {
+    if (this.matchUrl(fullPath, request.url) && this.name === request.method) {
+      const params = this.extractParams(fullPath, request.url);
+      request.params = params;
+      
+      this._requestExtractor = () => Promise.resolve(request);
       const response = await this._matcher;
 
       if (response instanceof HttpError || response instanceof HttpSuccess || response instanceof NullResponse) {
@@ -36,7 +42,7 @@ export class Method implements Resolver {
     return new NullResponse();
   }
 
-  reply(handler: () => Promise<any> | any) {
+  reply(handler: (value: any) => Promise<any> | any) {
     this._matcher.otherwise(handler);
 
     return this;
@@ -46,19 +52,19 @@ export class Method implements Resolver {
     return this._name;
   }
 
-  with(value: any, handler: () => Promise<any> | any) {
+  with(value: any, handler: (value: any) => Promise<any> | any) {
     this._matcher.with(value, handler);
 
     return this;
   }
 
-  withType<U>(value: new (...args: any[]) => U, handler: () => Promise<any> | any) {
+  withType<U>(value: new (...args: any[]) => U, handler: (value: U) => Promise<any> | any) {
     this._matcher.withType(value, handler);
 
     return this;
   }
 
-  when(matcher: (value: any) => Promise<boolean> | boolean, handler: () => Promise<any> | any) {
+  when(matcher: (value: any) => Promise<boolean> | boolean, handler: (value: any) => Promise<any> | any) {
     this._matcher.when(matcher, handler);
 
     return this;
@@ -88,7 +94,7 @@ export class Method implements Resolver {
     return this;
   }
 
-  otherwise(handler: () => Promise<any> | any) {
+  otherwise(handler: (value: any) => Promise<any> | any) {
     this._matcher.otherwise(handler);
 
     return this;
@@ -110,5 +116,37 @@ export class Method implements Resolver {
     this._matcher.return();
 
     return this;
+  }
+
+  private extractParams(path: string, url: string): { [key: string]: string } {
+    const pathParts = path.split('/');
+    const urlParts = url.split('/');
+    const params: { [key: string]: string } = {};
+
+    for (let i = 0; i < pathParts.length; i++) {
+      if (pathParts[i].startsWith(':')) {
+        const paramName = pathParts[i].substring(1);
+        params[paramName] = urlParts[i];
+      }
+    }
+
+    return params;
+  }
+
+  private matchUrl(path: string, url: string): boolean {
+    const pathParts = path.split('/');
+    const urlParts = url.split('/');
+
+    if (pathParts.length !== urlParts.length) {
+      return false;
+    }
+
+    for (let i = 0; i < pathParts.length; i++) {
+      if (!pathParts[i].startsWith(':') && pathParts[i] !== urlParts[i]) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

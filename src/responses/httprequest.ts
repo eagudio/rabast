@@ -1,5 +1,6 @@
-export abstract class HttpRequest {
-  abstract url: string;
-  abstract method: string;
-  abstract body: any;
+export interface HttpRequest {
+  url: string;
+  method: string;
+  body?: any;
+  params?: { [key: string]: string };
 }

@@ -322,3 +322,22 @@ t.test('should match route and rabast subroutes with conditions', async t => {
 
   t.same(response, new Ok('user'));
 });
+
+t.test('should match the correct route with parameters', async t => {
+  const app = rabast();
+
+  app
+    .routing(() =>
+      Route('/login/:username/:password', 
+        Post()
+          .reply((request) => `hello ${request.params.username} ${request.params.password}`)
+      ),
+    );
+
+  const response = await app.inject({
+    url: '/login/tom/tompassword',
+    method: 'POST',
+  });
+
+  t.same(response, new Ok('hello tom tompassword'));
+});
