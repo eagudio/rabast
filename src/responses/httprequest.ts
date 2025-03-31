@@ -3,4 +3,5 @@ export interface HttpRequest {
   method: string;
   body?: any;
   params?: { [key: string]: string };
+  query?: { [key: string]: string };
 }

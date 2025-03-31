@@ -24,10 +24,14 @@ export class Method implements Resolver {
 
   async handle(request: HttpRequest, root: string = ''): Promise<HttpResponse | null> {
     const fullPath = root + this._path;
+    const [urlPath] = request.url.split('?');
 
-    if (this.matchUrl(fullPath, request.url) && this.name === request.method) {
-      const params = this.extractParams(fullPath, request.url);
+    if (this.matchUrl(fullPath, urlPath) && this.name === request.method) {
+      const params = this.extractParams(fullPath, urlPath);
+      const query = this.extractQueryParams(request.url);
+      
       request.params = params;
+      request.query = query;
       
       this._requestExtractor = () => Promise.resolve(request);
       const response = await this._matcher;
@@ -148,5 +152,21 @@ export class Method implements Resolver {
     }
 
     return true;
+  }
+
+  private extractQueryParams(url: string): { [key: string]: string } {
+    const query: { [key: string]: string } = {};
+    const [, queryString] = url.split('?');
+    
+    if (!queryString) {
+      return query;
+    }
+
+    const params = new URLSearchParams(queryString);
+    params.forEach((value, key) => {
+      query[key] = value;
+    });
+
+    return query;
   }
 }

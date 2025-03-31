@@ -341,3 +341,22 @@ t.test('should match the correct route with parameters', async t => {
 
   t.same(response, new Ok('hello tom tompassword'));
 });
+
+t.test('should match the correct route with query parameters', async t => {
+  const app = rabast();
+
+  app
+    .routing(() =>
+      Route('/login', 
+        Post()
+          .reply((request) => `hello ${request.query.username} ${request.query.password}`)
+      ),
+    );
+
+  const response = await app.inject({
+    url: '/login?username=tom&password=tompassword',
+    method: 'POST',
+  });
+
+  t.same(response, new Ok('hello tom tompassword'));
+});
