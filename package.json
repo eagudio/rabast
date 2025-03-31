@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "tap test/tests --disable-coverage"
+    "test": "tap test/tests --disable-coverage",
+    "start": "node testserver.js"
   },
   "author": "",
   "license": "ISC",

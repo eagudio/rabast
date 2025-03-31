@@ -334,12 +334,19 @@ t.test('should match the correct route with parameters', async t => {
       ),
     );
 
-  const response = await app.inject({
+  let response = await app.inject({
     url: '/login/tom/tompassword',
     method: 'POST',
   });
 
   t.same(response, new Ok('hello tom tompassword'));
+
+  response = await app.inject({
+    url: '/login/alice/alicepassword',
+    method: 'POST',
+  });
+
+  t.same(response, new Ok('hello alice alicepassword'));
 });
 
 t.test('should match the correct route with query parameters', async t => {
@@ -353,10 +360,69 @@ t.test('should match the correct route with query parameters', async t => {
       ),
     );
 
-  const response = await app.inject({
+  let response = await app.inject({
     url: '/login?username=tom&password=tompassword',
     method: 'POST',
   });
 
   t.same(response, new Ok('hello tom tompassword'));
+
+  response = await app.inject({
+    url: '/login?username=alice&password=alicepassword',
+    method: 'POST',
+  });
+
+  t.same(response, new Ok('hello alice alicepassword'));
+});
+
+t.test('should match the correct route with url parameters and query parameters', async t => {
+  const app = rabast();
+
+  app
+    .routing(() =>
+      Route('/login/:username/:password', 
+        Post()
+          .reply((request) => `hello ${request.params.username} ${request.params.password} ${request.query.param1} ${request.query.param2}!`)
+      ),
+    );
+
+  let response = await app.inject({
+    url: '/login/tom/tompassword?param1=hello&param2=cerea',
+    method: 'POST',
+  });
+
+  t.same(response, new Ok('hello tom tompassword hello cerea!'));
+
+  response = await app.inject({
+    url: '/login/alice/alicepassword?param1=hello&param2=cerea',
+    method: 'POST',
+  });
+
+  t.same(response, new Ok('hello alice alicepassword hello cerea!'));
+});
+
+t.test('should match the correct route with url parameters and same query parameters', async t => {
+  const app = rabast();
+
+  app
+    .routing(() =>
+      Route('/:name', 
+        Get()
+          .reply((request) => `hello ${request.params.name} query: ${request.query.t}`)
+      ),
+    );
+
+  let response = await app.inject({
+    url: '/tom?t=cerea',
+    method: 'GET',
+  });
+
+  t.same(response, new Ok('hello tom query: cerea'));
+
+  response = await app.inject({
+    url: '/alice?t=badola',
+    method: 'GET',
+  });
+
+  t.same(response, new Ok('hello alice query: badola'));
 });
