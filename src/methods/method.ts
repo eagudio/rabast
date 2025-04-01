@@ -1,4 +1,4 @@
-import { Matcher } from "ciaplu";
+import { Context, Matcher } from "ciaplu";
 import { Resolver } from "../resolver";
 import { HttpRequest } from "../responses/httprequest";
 import { HttpResponse } from "../responses/httpresponse";
@@ -6,23 +6,26 @@ import { Ok } from "../responses/http/ok";
 import { NullResponse } from "../responses/nullresponse";
 import { HttpSuccess } from "../responses/http/httpsuccess";
 import { HttpError } from "../responses/http/httperror";
+import { RabastMatcher } from "../rabastmatcher";
 
 export class Method implements Resolver {
   private _name: string;
   private _path: string;
-  private _matcher: Matcher<any>;
+  private _matcher: RabastMatcher;
   private _requestExtractor: (request?: HttpRequest) => any;
 
   constructor(_name: string = '', _path: string = '') {
     this._name = _name;
     this._path = _path;
-    this._matcher = new Matcher<any>({});
+    this._matcher = new RabastMatcher({});
 
     this._requestExtractor = () => {};
     this.extracting(async () => await this._requestExtractor());
   }
 
   async handle(request: HttpRequest, root: string = ''): Promise<HttpResponse | null> {
+    this._matcher.context = new Context(request);
+
     const fullPath = root + this._path;
     const [urlPath] = request.url.split('?');
 

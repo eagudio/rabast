@@ -17,6 +17,23 @@
         "<node_internals>/**", // Ignora codice interno di Node.js
         "**/node_modules/**"   // Ignora codice nelle dipendenze
       ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Test Server",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["testserver.js"],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "internalConsoleOptions": "openOnSessionStart",
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**", // Ignora codice interno di Node.js
+        "**/node_modules/**"   // Ignora codice nelle dipendenze
+      ]
     }
   ]
 }

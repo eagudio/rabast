@@ -1,6 +1,6 @@
 import t from 'tap';
 import { rabast, Route } from '../../src/main';
-import { Get, Post } from '../../src/methods';
+import { Get, Post, Put } from '../../src/methods';
 import { Ok } from '../../src/responses/http/ok';
 import { NotFound } from '../../src/responses/http/notfound';
 import { Unauthorized } from '../../src/responses/http/unauthorized';
@@ -425,4 +425,38 @@ t.test('should match the correct route with url parameters and same query parame
   });
 
   t.same(response, new Ok('hello alice query: badola'));
+});
+
+t.test('should match the correct route with body', async t => {
+  const app = rabast();
+
+  app
+    .routing(() =>
+      Route('/user', 
+        Put()
+          .reply((request) => `hello ${request.body.username} ${request.body.password}`)
+      ),
+    );
+
+  let response = await app.inject({
+    url: '/user',
+    method: 'PUT',
+    body: {
+      username: 'tom',
+      password: 'tompassword'
+    }
+  });
+
+  t.same(response, new Ok('hello tom tompassword'));
+
+  response = await app.inject({
+    url: '/user',
+    method: 'PUT',
+    body: {
+      username: 'alice',
+      password: 'alicepassword'
+    }
+  });
+
+  t.same(response, new Ok('hello alice alicepassword'));
 });
